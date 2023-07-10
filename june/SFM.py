@@ -6,6 +6,7 @@ from tqdm.notebook import trange, tqdm
 import warnings
 import argparse
 from tqdm import tqdm
+import time
 warnings.simplefilter('ignore')
 
 import sys
@@ -121,6 +122,7 @@ def convert_last_to_int(lst):
 
 if __name__ == "__main__":
     args = get_args()
+    start_time = time.time()
     data_path = args.input
     load_path = data_path
     data = np.load(load_path, allow_pickle=True)
@@ -174,3 +176,4 @@ if __name__ == "__main__":
     data = np.array((meta_data, trajectories, destinations, obstacles), dtype=object)
     np.save(save_path, data)
     print("saved for ", save_path)
+    print("Total time: ", time.time() - start_time)
