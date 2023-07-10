@@ -12,7 +12,6 @@ import yaml
 import os
 warnings.simplefilter('ignore')
 
-from SFM import make_sfm
 import sys
 sys.path.append("../src")
 
