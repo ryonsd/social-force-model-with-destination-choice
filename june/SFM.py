@@ -4,6 +4,8 @@ import pandas as pd
 from statistics import mean, stdev
 from tqdm.notebook import trange, tqdm
 import warnings
+import argparse
+from tqdm import tqdm
 warnings.simplefilter('ignore')
 
 import sys
@@ -14,7 +16,13 @@ from main import Agent, run
 from social_force_model import SocialForceModel
 from destination_choice_model import DestinationChoiceModel
 
-
+def get_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-i', '--input', type=str, default='../data/od/od.csv')
+    parser.add_argument('-o', '--output', type=str, default='../output/trajectory.csv')
+    parser.add_argument('-d', '--device', type=str, default='cpu')  
+    args = parser.parse_args()
+    return args
 
 # Agent
 class AgentSFM():
@@ -41,6 +49,8 @@ def run_SFM(trajectories, mean_v, mean_vx, mean_vy, num_step, sfm, dests):
                           vel=[np.array([np.nan, np.nan])],
                           dest=[np.array([np.nan, np.nan])],
                           )
+    
+    progress_bar = tqdm(total=num_step, desc="Simulation Progress")
 
     t = 0
     while t < num_step:  # until all pedestrians move to right
@@ -51,21 +61,7 @@ def run_SFM(trajectories, mean_v, mean_vx, mean_vy, num_step, sfm, dests):
                     [trajectories[i][0][0], trajectories[i][0][1], trajectories[i][0][2]])
                 agents[i].vel[t] = np.array([np.mean(mean_vx), np.mean(mean_vy)])
                 agents[i].dest[t] = dests[i][:2]
-                # print("agents[i].dest[t]", agents[i].dest[t])
-                print(f"agents[{i}].dest[{t}]", agents[i].dest[t])
-
-
-            # real
-            # if (agents[i].type == "real"):
-            #     agents[i].loc.append(
-            #         np.array([real_trajectories[i].x[t], real_trajectories[i].y[t]]))
-            #     agents[i].vel.append(
-            #         np.array([real_trajectories[i].vel_x[t], real_trajectories[i].vel_y[t]]))
-            #     if real_trajectories[i].choice[t] - 1 in [0, 1]:
-            #         agents[i].dest.append(
-            #             dests[int(real_trajectories[i].choice[t]-1)])
-            #     else:
-            #         agents[i].dest.append(np.array([np.nan, np.nan]))
+                # print(f"agents[{i}].dest[{t}]", agents[i].dest[t])
 
             # model
             if (agents[i].t0 <= t) and (agents[i].done == False):
@@ -88,7 +84,9 @@ def run_SFM(trajectories, mean_v, mean_vx, mean_vy, num_step, sfm, dests):
                 agents[i].vel.append(np.array([np.nan, np.nan]))
                 agents[i].dest.append(np.array([np.nan, np.nan]))
         t += 1
+        progress_bar.update(1)
 
+    progress_bar.close()
     return agents
 
 def read_trajectory(agents):
@@ -122,9 +120,9 @@ def convert_last_to_int(lst):
 # __all__ = ['runSFM']
 
 if __name__ == "__main__":
-    data_path = '/Users/juneaist/work/equivariant-PIML/data/GC_dataset/GC_Dataset_ped1-12685_time2344-2404_interp9_xrange5-25_yrange15-35'
-    # data_path = '/Users/juneaist/work/equivariant-PIML/data/GC_dataset/GC_Dataset_toy1'
-    load_path = data_path + '.npy'
+    args = get_args()
+    data_path = args.input
+    load_path = data_path
     data = np.load(load_path, allow_pickle=True)
     meta_data, trajectories, destinations, obstacles = data
 
@@ -137,15 +135,16 @@ if __name__ == "__main__":
         v = (last - first) / tau
         v = v.tolist()
         mean_v.append(v)
+    mean_vl = [np.linalg.norm(v) for v in mean_v]
     mean_vx = [v[0] for v in mean_v]
     mean_vy = [v[1] for v in mean_v]
     
     params_sfm = {
-        "dt": 1/30,
+        "dt": 1,
         "A1": 2.1,
         "B": 0.3,
         "A2": 1,
-        "tau": 0.5,
+        "tau": 1,
         "phi": 100,
         "c": 0.5
     }
@@ -156,10 +155,9 @@ if __name__ == "__main__":
     # num_steps = 100 # for test
     # dests = [[x[0] for x in sublist] for sublist in destinations]
     dests = [list(item[0]) for item in destinations]
-    print(dests)
+    # print(dests)
 
-    agents = run_SFM(trajectories, mean_v, mean_vx, mean_vy, num_steps, sfm, dests)
-    # print(agents[0].loc)
+    agents = run_SFM(trajectories, mean_vl, mean_vx, mean_vy, num_steps, sfm, dests)
     
     trajectories, destinations = read_trajectory(agents)
 
@@ -169,10 +167,10 @@ if __name__ == "__main__":
         converted_trajectories.append(converted_traj)
     trajectories = converted_trajectories
     destinations = convert_to_tuples2(destinations)
-    print("destinations")
-    print(destinations)
+    # print("destinations")
+    # print(destinations)
 
-    save_path = data_path + '_SFM.npy'
+    save_path = args.output
     data = np.array((meta_data, trajectories, destinations, obstacles), dtype=object)
     np.save(save_path, data)
     print("saved for ", save_path)

@@ -18,10 +18,10 @@ class SocialForceModel:
     def social_force(self, t, i, agents, destination, delta=1e-3):
 
         # 1. to destination: F_id
-        # e_it = (destination - agents[i].loc[t]) / \
-        #     np.linalg.norm(destination - agents[i].loc[t])
-        # F_id = (agents[i].v0 * e_it - agents[i].vel[t]) / self.tau
-        F_id = (agents[i].v0 - agents[i].vel[t]) / self.tau
+        e_it = (destination - agents[i].loc[t][:2]) / \
+            np.linalg.norm(destination - agents[i].loc[t][:2])
+        F_id = (agents[i].v0 * e_it - agents[i].vel[t]) / self.tau
+        # F_id = (agents[i].v0 - agents[i].vel[t]) / self.tau
 
         # 2. from other pedestrians: F_ij
         F_ij = np.array([0, 0])
@@ -58,7 +58,7 @@ class SocialForceModel:
     def capped_velocity(self, desired_velocity, v_max):
         """Scale down a desired velocity to its capped speed."""
         desired_speeds = np.linalg.norm(desired_velocity, axis=-1)
-        v_max = np.linalg.norm(v_max, axis=-1)
+        # v_max = np.linalg.norm(v_max, axis=-1)
         if desired_speeds <= v_max:
             g = 1
         else:
@@ -71,7 +71,7 @@ class SocialForceModel:
         vel = agents[i].vel[t]
         F = self.social_force(t, i, agents, destination)
         v_next = vel + F * self.dt
-        v_next = self.capped_velocity(v_next, agents[i].v0*2.0)
+        v_next = self.capped_velocity(v_next, agents[i].v0*1.3)
         loc_next = loc + v_next * self.dt
         loc_next = np.append(loc_next, t)
 
