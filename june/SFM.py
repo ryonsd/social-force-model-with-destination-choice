@@ -92,7 +92,7 @@ def run_SFM(trajectories, mean_v, mean_vx, mean_vy, num_step, sfm, dests):
 
 def read_trajectory(agents):
     print("read trajectory")
-    print(agents)
+    # print(agents)
     trajectories = []
     for i in range(len(agents)):
         traj = agents[i].loc
