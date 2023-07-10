@@ -1,0 +1,8 @@
+input:
+  - '/home/aaf15257iq/work/equivariant-PIML/data/GC_dataset/GC_Dataset_ped1-12685_time2344-2404_interp9_xrange5-25_yrange15-35.npy'
+
+output:
+  - '/home/aaf15257iq/work/equivariant-PIML/data/GC_dataset/GC_Dataset_ped1-12685_time2344-2404_interp9_xrange5-25_yrange15-35_sfm.npy'
+
+device:
+  'cpu'
